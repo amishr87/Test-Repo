@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SkillSwap - Match & Learn</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 450px;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .card-container {
+            position: relative;
+            width: 100%;
+            height: 600px;
+            perspective: 1000px;
+        }
+
+        .card {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            cursor: grab;
+            user-select: none;
+            transition: transform 0.1s ease, box-shadow 0.3s ease;
+        }
+
+        .card:active {
+            cursor: grabbing;
+        }
+
+        .card.swiping-left {
+            box-shadow: 0 20px 60px rgba(255, 59, 48, 0.5);
+        }
+
+        .card.swiping-right {
+            box-shadow: 0 20px 60px rgba(52, 199, 89, 0.5);
+        }
+
+        .card-content {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            padding: 30px;
+            position: relative;
+        }
+
+        .swipe-indicator {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 4em;
+            font-weight: bold;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .swipe-indicator.left {
+            left: 30px;
+            color: #ff3b30;
+            transform: translateY(-50%) rotate(-15deg);
+        }
+
+        .swipe-indicator.right {
+            right: 30px;
+            color: #34c759;
+            transform: translateY(-50%) rotate(15deg);
+        }
+
+        .swipe-indicator.visible {
+            opacity: 1;
+        }
+
+        .avatar-section {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 25px;
+            position: relative;
+        }
+
+        .avatar {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3em;
+            color: white;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .verified-badge {
+            position: absolute;
+            bottom: 5px;
+            right: calc(50% - 70px);
+            background: #007AFF;
+            color: white;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2em;
+            border: 3px solid white;
+            box-shadow: 0 2px 10px rgba(0, 122, 255, 0.4);
+        }
+
+        .user-info {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .user-name {
+            font-size: 1.8em;
+            font-weight: 700;
+            color: #1c1c1e;
+            margin-bottom: 5px;
+        }
+
+        .user-location {
+            font-size: 1em;
+            color: #8e8e93;
+        }
+
+        .compatibility {
+            background: linear-gradient(135deg, #34c759 0%, #30d158 100%);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 15px;
+            text-align: center;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(52, 199, 89, 0.3);
+        }
+
+        .compatibility-text {
+            font-size: 0.9em;
+            opacity: 0.9;
+            margin-bottom: 3px;
+        }
+
+        .compatibility-percent {
+            font-size: 1.8em;
+            font-weight: 700;
+        }
+
+        .tags-section {
+            margin-bottom: 25px;
+        }
+
+        .tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+        }
+
+        .tag {
+            background: #f2f2f7;
+            color: #667eea;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: 600;
+        }
+
+        .skills-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: auto;
+        }
+
+        .skill-box {
+            background: #f8f8f8;
+            padding: 20px;
+            border-radius: 15px;
+            border: 2px solid #e5e5ea;
+        }
+
+        .skill-box.teaching {
+            border-color: #667eea;
+        }
+
+        .skill-box.learning {
+            border-color: #ff9500;
+        }
+
+        .skill-label {
+            font-size: 0.75em;
+            text-transform: uppercase;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            margin-bottom: 10px;
+            opacity: 0.7;
+        }
+
+        .skill-box.teaching .skill-label {
+            color: #667eea;
+        }
+
+        .skill-box.learning .skill-label {
+            color: #ff9500;
+        }
+
+        .skill-list {
+            list-style: none;
+        }
+
+        .skill-item {
+            padding: 6px 0;
+            font-size: 0.95em;
+            color: #1c1c1e;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+        }
+
+        .skill-item:before {
+            content: '•';
+            margin-right: 8px;
+            font-weight: bold;
+        }
+
+        .skill-box.teaching .skill-item:before {
+            color: #667eea;
+        }
+
+        .skill-box.learning .skill-item:before {
+            color: #ff9500;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-top: 30px;
+        }
+
+        .control-btn {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2em;
+            transition: all 0.2s ease;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .control-btn:hover {
+            transform: scale(1.1);
+        }
+
+        .control-btn:active {
+            transform: scale(0.95);
+        }
+
+        .control-btn.pass {
+            background: #ff3b30;
+            color: white;
+        }
+
+        .control-btn.like {
+            background: #34c759;
+            color: white;
+        }
+
+        .no-more-cards {
+            text-align: center;
+            color: white;
+            padding: 40px;
+        }
+
+        .no-more-cards h2 {
+            font-size: 2em;
+            margin-bottom: 15px;
+        }
+
+        .no-more-cards p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-top: 20px;
+            color: white;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2em;
+            font-weight: 700;
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useRef, useEffect } = React;
+
+        // Sample data
+        const profiles = [
+            {
+                id: 1,
+                name: "Alex Chen",
+                avatar: "🎸",
+                location: "2.5 km away",
+                verified: true,
+                compatibility: 92,
+                tags: ["Music Lover", "Tech Enthusiast", "Weekend Learner"],
+                teaching: ["Guitar", "Music Theory", "Song Writing"],
+                learning: ["Python", "Web Dev", "Data Science"]
+            },
+            {
+                id: 2,
+                name: "Sarah Johnson",
+                avatar: "🎨",
+                location: "1.2 km away",
+                verified: true,
+                compatibility: 88,
+                tags: ["Creative", "Language Nerd", "Foodie"],
+                teaching: ["Digital Art", "Photoshop", "Illustration"],
+                learning: ["Spanish", "Cooking", "Photography"]
+            },
+            {
+                id: 3,
+                name: "Marcus Williams",
+                avatar: "💻",
+                location: "4.8 km away",
+                verified: true,
+                compatibility: 95,
+                tags: ["Developer", "Fitness", "Early Bird"],
+                teaching: ["React", "JavaScript", "Node.js"],
+                learning: ["Piano", "Yoga", "Public Speaking"]
+            },
+            {
+                id: 4,
+                name: "Emma Davis",
+                avatar: "🎹",
+                location: "3.1 km away",
+                verified: false,
+                compatibility: 85,
+                tags: ["Musician", "Book Worm", "Coffee Addict"],
+                teaching: ["Piano", "Music Theory", "Classical Music"],
+                learning: ["Photography", "Video Editing", "Marketing"]
+            },
+            {
+                id: 5,
+                name: "Jordan Lee",
+                avatar: "🌟",
+                location: "5.6 km away",
+                verified: true,
+                compatibility: 90,
+                tags: ["Polyglot", "Traveler", "Social"],
+                teaching: ["French", "German", "Spanish"],
+                learning: ["Guitar", "Graphic Design", "SEO"]
+            }
+        ];
+
+        function Card({ profile, onSwipe, style }) {
+            const cardRef = useRef(null);
+            const [isDragging, setIsDragging] = useState(false);
+            const [startX, setStartX] = useState(0);
+            const [currentX, setCurrentX] = useState(0);
+            const [swipeDirection, setSwipeDirection] = useState(null);
+
+            const handleMouseDown = (e) => {
+                setIsDragging(true);
+                setStartX(e.clientX || e.touches?.[0]?.clientX);
+            };
+
+            const handleMouseMove = (e) => {
+                if (!isDragging) return;
+                const x = e.clientX || e.touches?.[0]?.clientX;
+                const diff = x - startX;
+                setCurrentX(diff);
+
+                if (Math.abs(diff) > 20) {
+                    setSwipeDirection(diff > 0 ? 'right' : 'left');
+                } else {
+                    setSwipeDirection(null);
+                }
+            };
+
+            const handleMouseUp = () => {
+                if (!isDragging) return;
+                setIsDragging(false);
+
+                if (Math.abs(currentX) > 100) {
+                    onSwipe(currentX > 0 ? 'right' : 'left');
+                } else {
+                    setCurrentX(0);
+                    setSwipeDirection(null);
+                }
+            };
+
+            useEffect(() => {
+                if (isDragging) {
+                    document.addEventListener('mousemove', handleMouseMove);
+                    document.addEventListener('touchmove', handleMouseMove);
+                    document.addEventListener('mouseup', handleMouseUp);
+                    document.addEventListener('touchend', handleMouseUp);
+                } else {
+                    document.removeEventListener('mousemove', handleMouseMove);
+                    document.removeEventListener('touchmove', handleMouseMove);
+                    document.removeEventListener('mouseup', handleMouseUp);
+                    document.removeEventListener('touchend', handleMouseUp);
+                }
+
+                return () => {
+                    document.removeEventListener('mousemove', handleMouseMove);
+                    document.removeEventListener('touchmove', handleMouseMove);
+                    document.removeEventListener('mouseup', handleMouseUp);
+                    document.removeEventListener('touchend', handleMouseUp);
+                };
+            }, [isDragging, startX, currentX]);
+
+            const rotation = currentX * 0.1;
+            const opacity = 1 - Math.abs(currentX) / 500;
+
+            return (
+                <div
+                    ref={cardRef}
+                    className={`card ${swipeDirection === 'left' ? 'swiping-left' : ''} ${swipeDirection === 'right' ? 'swiping-right' : ''}`}
+                    style={{
+                        ...style,
+                        transform: `translateX(${currentX}px) rotate(${rotation}deg)`,
+                        opacity: opacity,
+                        transition: isDragging ? 'none' : 'transform 0.3s ease, opacity 0.3s ease'
+                    }}
+                    onMouseDown={handleMouseDown}
+                    onTouchStart={handleMouseDown}
+                >
+                    <div className={`swipe-indicator left ${swipeDirection === 'left' ? 'visible' : ''}`}>✗</div>
+                    <div className={`swipe-indicator right ${swipeDirection === 'right' ? 'visible' : ''}`}>✓</div>
+                    
+                    <div className="card-content">
+                        <div className="avatar-section">
+                            <div className="avatar">{profile.avatar}</div>
+                            {profile.verified && (
+                                <div className="verified-badge">✓</div>
+                            )}
+                        </div>
+
+                        <div className="user-info">
+                            <div className="user-name">{profile.name}</div>
+                            <div className="user-location">📍 {profile.location}</div>
+                        </div>
+
+                        <div className="compatibility">
+                            <div className="compatibility-text">Skill Match</div>
+                            <div className="compatibility-percent">{profile.compatibility}%</div>
+                        </div>
+
+                        <div className="tags-section">
+                            <div className="tags">
+                                {profile.tags.map((tag, idx) => (
+                                    <span key={idx} className="tag">{tag}</span>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="skills-section">
+                            <div className="skill-box teaching">
+                                <div className="skill-label">Can Teach</div>
+                                <ul className="skill-list">
+                                    {profile.teaching.map((skill, idx) => (
+                                        <li key={idx} className="skill-item">{skill}</li>
+                                    ))}
+                                </ul>
+                            </div>
+                            <div className="skill-box learning">
+                                <div className="skill-label">Wants to Learn</div>
+                                <ul className="skill-list">
+                                    {profile.learning.map((skill, idx) => (
+                                        <li key={idx} className="skill-item">{skill}</li>
+                                    ))}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        function App() {
+            const [currentIndex, setCurrentIndex] = useState(0);
+            const [likeCount, setLikeCount] = useState(0);
+            const [passCount, setPassCount] = useState(0);
+
+            const handleSwipe = (direction) => {
+                if (direction === 'right') {
+                    setLikeCount(prev => prev + 1);
+                } else {
+                    setPassCount(prev => prev + 1);
+                }
+                
+                setTimeout(() => {
+                    setCurrentIndex(prev => prev + 1);
+                }, 300);
+            };
+
+            const handleButtonClick = (direction) => {
+                handleSwipe(direction);
+            };
+
+            return (
+                <div className="app-container">
+                    <div className="header">
+                        <h1>SkillSwap</h1>
+                        <p>Find your learning partner</p>
+                    </div>
+
+                    <div className="card-container">
+                        {currentIndex < profiles.length ? (
+                            profiles.slice(currentIndex, currentIndex + 2).map((profile, idx) => (
+                                <Card
+                                    key={profile.id}
+                                    profile={profile}
+                                    onSwipe={handleSwipe}
+                                    style={{
+                                        zIndex: 10 - idx,
+                                        transform: `scale(${1 - idx * 0.05}) translateY(${idx * 10}px)`,
+                                        opacity: 1 - idx * 0.3
+                                    }}
+                                />
+                            ))
+                        ) : (
+                            <div className="no-more-cards">
+                                <h2>🎉 That's everyone!</h2>
+                                <p>Check back later for more matches</p>
+                            </div>
+                        )}
+                    </div>
+
+                    {currentIndex < profiles.length && (
+                        <div className="controls">
+                            <button className="control-btn pass" onClick={() => handleButtonClick('left')}>
+                                ✗
+                            </button>
+                            <button className="control-btn like" onClick={() => handleButtonClick('right')}>
+                                ✓
+                            </button>
+                        </div>
+                    )}
+
+                    <div className="stats">
+                        <div className="stat-item">
+                            <div className="stat-number">{passCount}</div>
+                            <div className="stat-label">Passed</div>
+                        </div>
+                        <div className="stat-item">
+                            <div className="stat-number">{likeCount}</div>
+                            <div className="stat-label">Liked</div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
