@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Skill Share - Swipe Prototype</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app">
+      <header class="app-header">
+        <div class="brand">
+          <span class="brand-icon">🧭</span>
+          <span class="brand-name">Skill Match</span>
+        </div>
+        <div class="header-actions">
+          <button class="action-btn small ghost" id="infoBtn" title="About">ℹ️</button>
+        </div>
+      </header>
+
+      <main class="main">
+        <div class="deck" id="deck">
+          <!-- Cards injected here by JS -->
+        </div>
+
+        <div class="controls">
+          <button class="action-btn dislike" id="btnLeft" aria-label="Swipe left">✖</button>
+          <button class="action-btn like" id="btnRight" aria-label="Swipe right">❤</button>
+        </div>
+      </main>
+
+      <footer class="app-footer">
+        <span>Prototype · Swipe left/right · ←/→ keys</span>
+      </footer>
+    </div>
+
+    <dialog id="aboutDialog">
+      <h3>Skill Match Prototype</h3>
+      <p>Demo of a swipeable card for skill sharing discovery. No backend required.</p>
+      <button class="action-btn small" id="closeAbout">Close</button>
+    </dialog>
+
+    <script src="app.js"></script>
+  </body>
+</html>
